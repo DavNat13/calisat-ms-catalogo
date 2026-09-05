@@ -5,8 +5,12 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtAudienceValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -14,6 +18,10 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+/**
+ * Contrato de seguridad (ESP.md): la lectura del catálogo es pública para clientes;
+ * los endpoints de administración (POST/PUT/DELETE) exigen JWT valido.
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -27,10 +35,18 @@ public class SecurityConfig {
     @Value("${CORS_ALLOWED_ORIGINS:http://localhost:5173}")
     private String allowedOrigins;
 
+    @Value("${JWT_AUDIENCE:}")
+    private String jwtAudience;
+
     @Bean
     public JwtDecoder jwtDecoder() {
         String jwkSetUri = issuerUri + tenantId + "/discovery/v2.0/keys";
         NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
+
+        OAuth2TokenValidator<Jwt> audienceValidator =
+                new JwtAudienceValidator("api://" + jwtAudience);
+        jwtDecoder.setJwtValidator(audienceValidator);
+
         return jwtDecoder;
     }
 
@@ -54,6 +70,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers(HttpMethod.GET, "/api/v1/catalogo/**").permitAll()
                 .requestMatchers("/api/v1/public/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .anyRequest().authenticated()

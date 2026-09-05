@@ -30,7 +30,8 @@ public class SecurityConfig {
     @Bean
     public JwtDecoder jwtDecoder() {
         String jwkSetUri = issuerUri + tenantId + "/discovery/v2.0/keys";
-        return NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
+        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
+        return jwtDecoder;
     }
 
     @Bean
@@ -39,6 +40,8 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        // allowCredentials(true) es necesario: el frontend envia JWT en el header
+        // Authorization via credentials:include; sin esto, el navegador bloquea el header.
         config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
@@ -51,7 +54,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/api/v1/public/**", "/actuator/**").permitAll()
+                .requestMatchers("/api/v1/public/**").permitAll()
+                .requestMatchers("/actuator/health").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2

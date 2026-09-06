@@ -38,7 +38,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = {
         "spring.security.oauth2.resourceserver.jwt.issuer-uri=https://example.com/",
         "spring.security.oauth2.resourceserver.jwt.tenant-id=fake-tenant",
-        "CORS_ALLOWED_ORIGINS=http://localhost:5173"
+        "CORS_ALLOWED_ORIGINS=http://localhost:5173",
+        "JWT_AUDIENCE=fake-aud"
 })
 @Import({SecurityConfig.class, SecurityConfigTest.TestControllerConfig.class})
 class SecurityConfigTest {

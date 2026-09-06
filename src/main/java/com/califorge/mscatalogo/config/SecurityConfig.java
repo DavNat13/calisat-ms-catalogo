@@ -1,6 +1,9 @@
 package com.califorge.mscatalogo.config;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -19,8 +22,10 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
- * Contrato de seguridad (ESP.md): la lectura del catálogo es pública para clientes;
- * los endpoints de administración (POST/PUT/DELETE) exigen JWT valido.
+ * Contrato de seguridad (ESP.md): la lectura del catalogo es publica para clientes;
+ * los endpoints de administracion (POST/PUT/DELETE) exigen JWT valido.
+ * Decision del equipo (revision 2026-09-05): "Administradores" en ESP se interpreta
+ * como "usuario autenticado" (no se exige un claim de rol en esta iteracion).
  */
 @Configuration
 @EnableWebSecurity
@@ -37,6 +42,40 @@ public class SecurityConfig {
 
     @Value("${JWT_AUDIENCE:}")
     private String jwtAudience;
+
+    /**
+     * Fail-fast (C3): si la config JWT llega vacia (por ejemplo, Compose
+     * sustituye la variable faltante con ""), el MS debe negarse a arrancar en
+     * lugar de responder 401 silencioso en toda escritura.
+     */
+    @PostConstruct
+    void validarConfigJwt() {
+        List<String> faltantes = configJwtFaltante(issuerUri, tenantId, jwtAudience);
+        if (!faltantes.isEmpty()) {
+            throw new IllegalStateException(
+                    "Configuracion JWT incompleta en el arranque: faltan "
+                            + String.join(", ", faltantes)
+                            + ". Define JWT_ISSUER_URI, JWT_TENANT_ID y JWT_AUDIENCE en la instancia (docker-compose/.env) antes de desplegar.");
+        }
+    }
+
+    static List<String> configJwtFaltante(String issuerUri, String tenantId, String jwtAudience) {
+        List<String> faltantes = new ArrayList<>();
+        if (esBlanco(issuerUri)) {
+            faltantes.add("JWT_ISSUER_URI");
+        }
+        if (esBlanco(tenantId)) {
+            faltantes.add("JWT_TENANT_ID");
+        }
+        if (esBlanco(jwtAudience)) {
+            faltantes.add("JWT_AUDIENCE");
+        }
+        return faltantes;
+    }
+
+    private static boolean esBlanco(String valor) {
+        return valor == null || valor.isBlank();
+    }
 
     @Bean
     public JwtDecoder jwtDecoder() {
@@ -71,7 +110,6 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(HttpMethod.GET, "/api/v1/catalogo/**").permitAll()
-                .requestMatchers("/api/v1/public/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .anyRequest().authenticated()
             )

@@ -3,15 +3,16 @@ services:
     image: postgres:15-alpine
     container_name: calisat-db-catalogo
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-catalogo}
+      POSTGRES_USER: ${POSTGRES_USER:-calisat}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-calisat}
     volumes:
       - calisat_catalogo_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
     networks:
       - calisat-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-calisat} -d ${POSTGRES_DB:-catalogo}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,15 +25,15 @@ services:
     ports:
       - "8083:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/${POSTGRES_DB}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/${POSTGRES_DB:-catalogo}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-calisat}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-calisat}
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-validate}
       JWT_ISSUER_URI: ${JWT_ISSUER_URI}
       JWT_TENANT_ID: ${JWT_TENANT_ID}
       JWT_AUDIENCE: ${JWT_AUDIENCE}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
     depends_on:
       postgres-db:
         condition: service_healthy

@@ -16,8 +16,6 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
     boolean existsBySku(String sku);
 
-    List<Producto> findByActivoTrue();
-
     Page<Producto> findByActivoTrue(Pageable pageable);
 
     List<Producto> findByCategoriaAndActivoTrue(String categoria);

@@ -151,6 +151,28 @@ class ProductoControllerTest {
     }
 
     @Test
+    void crear_conJsonMalformado_devuelve400No500() throws Exception {
+        String body = "{ \"sku\": \"ANILLAS-001\", \"nombre\": \"incompleto";
+
+        mockMvc.perform(post("/api/v1/catalogo")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").exists());
+    }
+
+    @Test
+    void actualizar_conIdNoNumerico_devuelve400No500() throws Exception {
+        mockMvc.perform(put("/api/v1/catalogo/{id}", "abc")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"sku":"ANILLAS-002","nombre":"Anillas Pro 2","precio":29.99,"categoria":"Anillas"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").exists());
+    }
+
+    @Test
     void actualizar_devuelve200() throws Exception {
         Producto actualizado = producto(1L, "ANILLAS-002");
         when(productoService.actualizar(eq(1L), any(ProductoRequest.class)))

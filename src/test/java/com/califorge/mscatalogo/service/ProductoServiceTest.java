@@ -131,14 +131,14 @@ class ProductoServiceTest {
         Producto existente = producto("ANILLAS-001", true);
         existente.setId(1L);
         when(productoRepository.existsBySku("ANILLAS-002")).thenReturn(false);
-        when(productoRepository.findById(1L)).thenReturn(Optional.of(existente));
+        when(productoRepository.findBySku("ANILLAS-001")).thenReturn(Optional.of(existente));
         when(productoRepository.save(any(Producto.class))).thenReturn(existente);
 
         ProductoRequest request = new ProductoRequest(
                 "ANILLAS-002", "Anillas Pro 2", "Nueva descripcion",
                 new BigDecimal("29.99"), "Anillas", "http://img.test/anillas2.jpg");
 
-        Optional<Producto> resultado = productoService.actualizar(1L, request);
+        Optional<Producto> resultado = productoService.actualizar("ANILLAS-001", request);
 
         assertTrue(resultado.isPresent());
         assertEquals("ANILLAS-002", resultado.get().getSku());
@@ -147,41 +147,69 @@ class ProductoServiceTest {
         assertEquals(new BigDecimal("29.99"), resultado.get().getPrecio());
         assertEquals("Anillas", resultado.get().getCategoria());
         assertEquals("http://img.test/anillas2.jpg", resultado.get().getImagenUrl());
+        verify(productoRepository).findBySku("ANILLAS-001");
     }
 
     @Test
     void actualizar_lanzaSkuDuplicadoSiElSkuEsDeOtroProducto() {
-        Producto otro = producto("ANILLAS-002", true);
-        otro.setId(2L);
         when(productoRepository.existsBySku("ANILLAS-002")).thenReturn(true);
-        when(productoRepository.findBySku("ANILLAS-002")).thenReturn(Optional.of(otro));
 
         ProductoRequest request = new ProductoRequest(
                 "ANILLAS-002", "Anillas Pro 2", "Nueva descripcion",
                 new BigDecimal("29.99"), "Anillas", null);
 
-        assertThrows(SkuDuplicadoException.class, () -> productoService.actualizar(1L, request));
+        assertThrows(SkuDuplicadoException.class,
+                () -> productoService.actualizar("ANILLAS-001", request));
+        verify(productoRepository).existsBySku("ANILLAS-002");
+    }
+
+    @Test
+    void actualizar_conElMismoSkuNoRechazaDuplicado() {
+        Producto existente = producto("ANILLAS-001", true);
+        existente.setId(1L);
+        when(productoRepository.findBySku("ANILLAS-001")).thenReturn(Optional.of(existente));
+        when(productoRepository.save(any(Producto.class))).thenReturn(existente);
+
+        ProductoRequest request = request("ANILLAS-001");
+
+        Optional<Producto> resultado = productoService.actualizar("ANILLAS-001", request);
+
+        assertTrue(resultado.isPresent());
+        verify(productoRepository, never()).existsBySku("ANILLAS-001");
     }
 
     @Test
     void actualizar_devuelveVacioSiNoExiste() {
-        when(productoRepository.findById(99L)).thenReturn(Optional.empty());
+        when(productoRepository.findBySku("NO-EXISTE")).thenReturn(Optional.empty());
 
         ProductoRequest request = request("ANILLAS-001");
 
-        Optional<Producto> resultado = productoService.actualizar(99L, request);
+        Optional<Producto> resultado = productoService.actualizar("NO-EXISTE", request);
 
         assertFalse(resultado.isPresent());
+    }
+
+    @Test
+    void actualizar_noActualizaProductoInactivo() {
+        Producto inactivo = producto("ANILLAS-001", false);
+        when(productoRepository.findBySku("ANILLAS-001")).thenReturn(Optional.of(inactivo));
+
+        ProductoRequest request = request("ANILLAS-002");
+
+        Optional<Producto> resultado = productoService.actualizar("ANILLAS-001", request);
+
+        assertFalse(resultado.isPresent());
+        verify(productoRepository, never()).save(any(Producto.class));
     }
 
     @Test
     void eliminar_haceBajaLogicaYNoBorraFisico() {
         Producto producto = producto("ANILLAS-001", true);
         producto.setId(1L);
-        when(productoRepository.findById(1L)).thenReturn(Optional.of(producto));
+        when(productoRepository.findBySku("ANILLAS-001")).thenReturn(Optional.of(producto));
         when(productoRepository.save(any(Producto.class))).thenReturn(producto);
 
-        Optional<Producto> resultado = productoService.eliminar(1L);
+        Optional<Producto> resultado = productoService.eliminar("ANILLAS-001");
 
         assertTrue(resultado.isPresent());
         assertFalse(resultado.get().isActivo());
@@ -190,10 +218,22 @@ class ProductoServiceTest {
     }
 
     @Test
-    void eliminar_devuelveVacioSiNoExiste() {
-        when(productoRepository.findById(1L)).thenReturn(Optional.empty());
+    void eliminar_esIdempotenteSobreUnProductoYaInactivo() {
+        Producto inactivo = producto("ANILLAS-001", false);
+        when(productoRepository.findBySku("ANILLAS-001")).thenReturn(Optional.of(inactivo));
+        when(productoRepository.save(any(Producto.class))).thenReturn(inactivo);
 
-        Optional<Producto> resultado = productoService.eliminar(1L);
+        Optional<Producto> resultado = productoService.eliminar("ANILLAS-001");
+
+        assertTrue(resultado.isPresent());
+        assertFalse(resultado.get().isActivo());
+    }
+
+    @Test
+    void eliminar_devuelveVacioSiNoExiste() {
+        when(productoRepository.findBySku("NO-EXISTE")).thenReturn(Optional.empty());
+
+        Optional<Producto> resultado = productoService.eliminar("NO-EXISTE");
 
         assertFalse(resultado.isPresent());
     }

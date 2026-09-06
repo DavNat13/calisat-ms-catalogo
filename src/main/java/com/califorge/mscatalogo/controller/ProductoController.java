@@ -88,28 +88,29 @@ public class ProductoController {
     }
 
     /**
-     * PUT /api/v1/catalogo/{id}
-     * Actualiza por id. Devuelve 404 si no existe.
+     * PUT /api/v1/catalogo/{sku}
+     * Actualiza por SKU (identificador unificado). Devuelve 404 si no existe o esta inactivo.
      */
-    @PutMapping("/{id}")
+    @PutMapping("/{sku}")
     public ResponseEntity<ProductoResponse> actualizar(
-            @PathVariable Long id,
+            @PathVariable String sku,
             @Valid @RequestBody ProductoRequest request) {
-        return productoService.actualizar(id, request)
+        return productoService.actualizar(sku, request)
                 .map(ProductoResponse::desde)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     /**
-     * DELETE /api/v1/catalogo/{id}
-     * Baja lógica: cambia {@code activo} a false (regla 1). Responde 200 OK.
+     * DELETE /api/v1/catalogo/{sku}
+     * Baja lógica por SKU: cambia {@code activo} a false (regla 1). Idempotente.
+     * Responde 200 OK. Devuelve 404 si el SKU no existe.
      */
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> eliminar(@PathVariable Long id) {
-        return productoService.eliminar(id)
+    @DeleteMapping("/{sku}")
+    public ResponseEntity<Map<String, Object>> eliminar(@PathVariable String sku) {
+        return productoService.eliminar(sku)
                 .map(p -> ResponseEntity.ok(Map.<String, Object>of(
-                        "id", p.getId(),
+                        "sku", p.getSku(),
                         "mensaje", "Producto dado de baja correctamente"
                 )))
                 .orElse(ResponseEntity.notFound().build());

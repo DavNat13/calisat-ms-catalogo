@@ -162,27 +162,29 @@ class ProductoControllerTest {
     }
 
     @Test
-    void actualizar_conIdNoNumerico_devuelve400No500() throws Exception {
-        mockMvc.perform(put("/api/v1/catalogo/{id}", "abc")
+    void actualizar_conSkuNoNumerico_devuelve404No400() throws Exception {
+        when(productoService.actualizar(eq("ANILLAS X-02"), any(ProductoRequest.class)))
+                .thenReturn(Optional.empty());
+
+        mockMvc.perform(put("/api/v1/catalogo/{sku}", "ANILLAS X-02")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"sku":"ANILLAS-002","nombre":"Anillas Pro 2","precio":29.99,"categoria":"Anillas"}
+                                {"sku":"ANILLAS X-02","nombre":"Anillas Pro 2","precio":29.99,"categoria":"Anillas"}
                                 """))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.mensaje").exists());
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void actualizar_devuelve200() throws Exception {
         Producto actualizado = producto(1L, "ANILLAS-002");
-        when(productoService.actualizar(eq(1L), any(ProductoRequest.class)))
+        when(productoService.actualizar(eq("ANILLAS-001"), any(ProductoRequest.class)))
                 .thenReturn(Optional.of(actualizado));
 
         String body = """
                 {"sku":"ANILLAS-002","nombre":"Anillas Pro 2","precio":29.99,"categoria":"Anillas"}
                 """;
 
-        mockMvc.perform(put("/api/v1/catalogo/{id}", 1L)
+        mockMvc.perform(put("/api/v1/catalogo/{sku}", "ANILLAS-001")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isOk())
@@ -191,14 +193,14 @@ class ProductoControllerTest {
 
     @Test
     void actualizar_devuelve404SiNoExiste() throws Exception {
-        when(productoService.actualizar(eq(99L), any(ProductoRequest.class)))
+        when(productoService.actualizar(eq("NO-EXISTE"), any(ProductoRequest.class)))
                 .thenReturn(Optional.empty());
 
         String body = """
                 {"sku":"ANILLAS-002","nombre":"Anillas Pro 2","precio":29.99,"categoria":"Anillas"}
                 """;
 
-        mockMvc.perform(put("/api/v1/catalogo/{id}", 99L)
+        mockMvc.perform(put("/api/v1/catalogo/{sku}", "NO-EXISTE")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isNotFound());
@@ -208,18 +210,19 @@ class ProductoControllerTest {
     void eliminar_devuelve200() throws Exception {
         Producto producto = producto(1L, "ANILLAS-001");
         producto.setActivo(false);
-        when(productoService.eliminar(1L)).thenReturn(Optional.of(producto));
+        when(productoService.eliminar("ANILLAS-001")).thenReturn(Optional.of(producto));
 
-        mockMvc.perform(delete("/api/v1/catalogo/{id}", 1L))
+        mockMvc.perform(delete("/api/v1/catalogo/{sku}", "ANILLAS-001"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sku", is("ANILLAS-001")))
                 .andExpect(jsonPath("$.mensaje", is("Producto dado de baja correctamente")));
     }
 
     @Test
     void eliminar_devuelve404SiNoExiste() throws Exception {
-        when(productoService.eliminar(99L)).thenReturn(Optional.empty());
+        when(productoService.eliminar("NO-EXISTE")).thenReturn(Optional.empty());
 
-        mockMvc.perform(delete("/api/v1/catalogo/{id}", 99L))
+        mockMvc.perform(delete("/api/v1/catalogo/{sku}", "NO-EXISTE"))
                 .andExpect(status().isNotFound());
     }
 

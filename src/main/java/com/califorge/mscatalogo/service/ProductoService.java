@@ -56,18 +56,20 @@ public class ProductoService {
     }
 
     /**
-     * Actualiza los campos editables del producto. Semantica REPLACE: el cliente envia
-     * el estado completo (sku, nombre, descripcion, precio, categoria, imagenUrl).
+     * Actualiza los campos editables del producto identificado por {@code sku}.
+     * Semantica REPLACE: el cliente envia el estado completo (sku, nombre, descripcion,
+     * precio, categoria, imagenUrl).
      * El SKU nuevo debe ser unico: si pertenece a otro producto, se rechaza con 400.
+     * Devuelve vacio si el SKU no existe o el producto esta inactivo.
      */
-    public Optional<Producto> actualizar(Long id, ProductoRequest request) {
-        if (request.sku() != null && productoRepository.existsBySku(request.sku())) {
-            Optional<Producto> mismo = productoRepository.findBySku(request.sku());
-            if (mismo.isEmpty() || !mismo.get().getId().equals(id)) {
-                throw new SkuDuplicadoException(request.sku());
-            }
+    public Optional<Producto> actualizar(String sku, ProductoRequest request) {
+        if (request.sku() != null
+                && !request.sku().equals(sku)
+                && productoRepository.existsBySku(request.sku())) {
+            throw new SkuDuplicadoException(request.sku());
         }
-        return productoRepository.findById(id)
+        return productoRepository.findBySku(sku)
+                .filter(Producto::isActivo)
                 .map(producto -> {
                     producto.setSku(request.sku());
                     producto.setNombre(request.nombre());
@@ -81,10 +83,11 @@ public class ProductoService {
 
     /**
      * Baja logica (regla 1 de la spec): marca {@code activo=false} y guarda.
+     * Idempotente: si el producto ya esta inactivo, responde 200 igualmente.
      * No se invoca {@code delete} del repositorio para preservar el historial.
      */
-    public Optional<Producto> eliminar(Long id) {
-        return productoRepository.findById(id)
+    public Optional<Producto> eliminar(String sku) {
+        return productoRepository.findBySku(sku)
                 .map(producto -> {
                     producto.setActivo(false);
                     return productoRepository.save(producto);

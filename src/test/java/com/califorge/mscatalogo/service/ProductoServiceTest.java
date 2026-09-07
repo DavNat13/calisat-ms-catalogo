@@ -1,6 +1,7 @@
 package com.califorge.mscatalogo.service;
 
 import com.califorge.mscatalogo.dto.ProductoRequest;
+import com.califorge.mscatalogo.exception.SkuActualizacionNoPermitidaException;
 import com.califorge.mscatalogo.exception.SkuDuplicadoException;
 import com.califorge.mscatalogo.model.Producto;
 import com.califorge.mscatalogo.repository.ProductoRepository;
@@ -130,37 +131,35 @@ class ProductoServiceTest {
     void actualizar_reescribeCampos() {
         Producto existente = producto("ANILLAS-001", true);
         existente.setId(1L);
-        when(productoRepository.existsBySku("ANILLAS-002")).thenReturn(false);
         when(productoRepository.findBySku("ANILLAS-001")).thenReturn(Optional.of(existente));
         when(productoRepository.save(any(Producto.class))).thenReturn(existente);
 
         ProductoRequest request = new ProductoRequest(
-                "ANILLAS-002", "Anillas Pro 2", "Nueva descripcion",
+                "ANILLAS-001", "Anillas Pro 2", "Nueva descripcion",
                 new BigDecimal("29.99"), "Anillas", "http://img.test/anillas2.jpg");
 
         Optional<Producto> resultado = productoService.actualizar("ANILLAS-001", request);
 
         assertTrue(resultado.isPresent());
-        assertEquals("ANILLAS-002", resultado.get().getSku());
+        assertEquals("ANILLAS-001", resultado.get().getSku());
         assertEquals("Anillas Pro 2", resultado.get().getNombre());
         assertEquals("Nueva descripcion", resultado.get().getDescripcion());
         assertEquals(new BigDecimal("29.99"), resultado.get().getPrecio());
         assertEquals("Anillas", resultado.get().getCategoria());
         assertEquals("http://img.test/anillas2.jpg", resultado.get().getImagenUrl());
         verify(productoRepository).findBySku("ANILLAS-001");
+        verify(productoRepository, never()).existsBySku(any());
     }
 
     @Test
-    void actualizar_lanzaSkuDuplicadoSiElSkuEsDeOtroProducto() {
-        when(productoRepository.existsBySku("ANILLAS-002")).thenReturn(true);
-
+    void actualizar_rechazaCambioDeSku() {
         ProductoRequest request = new ProductoRequest(
                 "ANILLAS-002", "Anillas Pro 2", "Nueva descripcion",
                 new BigDecimal("29.99"), "Anillas", null);
 
-        assertThrows(SkuDuplicadoException.class,
+        assertThrows(SkuActualizacionNoPermitidaException.class,
                 () -> productoService.actualizar("ANILLAS-001", request));
-        verify(productoRepository).existsBySku("ANILLAS-002");
+        verify(productoRepository, never()).existsBySku(any());
     }
 
     @Test
@@ -182,7 +181,7 @@ class ProductoServiceTest {
     void actualizar_devuelveVacioSiNoExiste() {
         when(productoRepository.findBySku("NO-EXISTE")).thenReturn(Optional.empty());
 
-        ProductoRequest request = request("ANILLAS-001");
+        ProductoRequest request = request("NO-EXISTE");
 
         Optional<Producto> resultado = productoService.actualizar("NO-EXISTE", request);
 
@@ -194,7 +193,7 @@ class ProductoServiceTest {
         Producto inactivo = producto("ANILLAS-001", false);
         when(productoRepository.findBySku("ANILLAS-001")).thenReturn(Optional.of(inactivo));
 
-        ProductoRequest request = request("ANILLAS-002");
+        ProductoRequest request = request("ANILLAS-001");
 
         Optional<Producto> resultado = productoService.actualizar("ANILLAS-001", request);
 

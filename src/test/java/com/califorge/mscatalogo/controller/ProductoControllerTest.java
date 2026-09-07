@@ -3,6 +3,7 @@ package com.califorge.mscatalogo.controller;
 import com.califorge.mscatalogo.dto.ProductoRequest;
 import com.califorge.mscatalogo.exception.GlobalExceptionHandler;
 import com.califorge.mscatalogo.exception.SkuDuplicadoException;
+import com.califorge.mscatalogo.exception.SkuActualizacionNoPermitidaException;
 import com.califorge.mscatalogo.model.Producto;
 import com.califorge.mscatalogo.service.ProductoService;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -176,9 +178,25 @@ class ProductoControllerTest {
 
     @Test
     void actualizar_devuelve200() throws Exception {
-        Producto actualizado = producto(1L, "ANILLAS-002");
+        Producto actualizado = producto(1L, "ANILLAS-001");
         when(productoService.actualizar(eq("ANILLAS-001"), any(ProductoRequest.class)))
                 .thenReturn(Optional.of(actualizado));
+
+        String body = """
+                {"sku":"ANILLAS-001","nombre":"Anillas Pro 2","precio":29.99,"categoria":"Anillas"}
+                """;
+
+        mockMvc.perform(put("/api/v1/catalogo/{sku}", "ANILLAS-001")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sku", is("ANILLAS-001")));
+    }
+
+    @Test
+    void actualizar_conSkuDistintoAlPath_devuelve400() throws Exception {
+        when(productoService.actualizar(eq("ANILLAS-001"), any(ProductoRequest.class)))
+                .thenThrow(new SkuActualizacionNoPermitidaException("ANILLAS-001"));
 
         String body = """
                 {"sku":"ANILLAS-002","nombre":"Anillas Pro 2","precio":29.99,"categoria":"Anillas"}
@@ -187,8 +205,8 @@ class ProductoControllerTest {
         mockMvc.perform(put("/api/v1/catalogo/{sku}", "ANILLAS-001")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.sku", is("ANILLAS-002")));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje", containsString("inmutable")));
     }
 
     @Test

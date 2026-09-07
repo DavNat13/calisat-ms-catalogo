@@ -1,6 +1,7 @@
 package com.califorge.mscatalogo.service;
 
 import com.califorge.mscatalogo.dto.ProductoRequest;
+import com.califorge.mscatalogo.exception.SkuActualizacionNoPermitidaException;
 import com.califorge.mscatalogo.exception.SkuDuplicadoException;
 import com.califorge.mscatalogo.model.Producto;
 import com.califorge.mscatalogo.repository.ProductoRepository;
@@ -57,21 +58,19 @@ public class ProductoService {
 
     /**
      * Actualiza los campos editables del producto identificado por {@code sku}.
-     * Semantica REPLACE: el cliente envia el estado completo (sku, nombre, descripcion,
+     * Semantica REPLACE: el cliente envia el estado completo (nombre, descripcion,
      * precio, categoria, imagenUrl).
-     * El SKU nuevo debe ser unico: si pertenece a otro producto, se rechaza con 400.
+     * El SKU es el identificador canonico e INMUTABLE: si el body trae un sku distinto
+     * al del path, se rechaza con 400 (evita SKUs huerfanos en ms-inventario, Auditoria 8.1).
      * Devuelve vacio si el SKU no existe o el producto esta inactivo.
      */
     public Optional<Producto> actualizar(String sku, ProductoRequest request) {
-        if (request.sku() != null
-                && !request.sku().equals(sku)
-                && productoRepository.existsBySku(request.sku())) {
-            throw new SkuDuplicadoException(request.sku());
+        if (request.sku() != null && !request.sku().equals(sku)) {
+            throw new SkuActualizacionNoPermitidaException(sku);
         }
         return productoRepository.findBySku(sku)
                 .filter(Producto::isActivo)
                 .map(producto -> {
-                    producto.setSku(request.sku());
                     producto.setNombre(request.nombre());
                     producto.setDescripcion(request.descripcion());
                     producto.setPrecio(request.precio());

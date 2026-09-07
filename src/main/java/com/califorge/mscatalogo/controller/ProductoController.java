@@ -104,7 +104,7 @@ public class ProductoController {
      * PUT /api/v1/catalogo/{sku}
      * Actualiza por SKU (identificador unificado). Devuelve 404 si no existe o esta inactivo.
      */
-    @Operation(summary = "Actualizar producto por SKU", description = "Reemplaza el estado completo del producto identificado por su SKU (identificador canonico). 404 si no existe o esta inactivo. Requiere JWT.")
+    @Operation(summary = "Actualizar producto por SKU", description = "Reemplaza el estado editado (nombre, descripcion, precio, categoria, imagenUrl) del producto identificado por su SKU (identificador canonico). El SKU es inmutable: 400 si el body trae un sku distinto al del path. 404 si no existe o esta inactivo. Requiere JWT.")
     @PutMapping("/{sku}")
     public ResponseEntity<ProductoResponse> actualizar(
             @Parameter(name = "sku", description = "SKU del producto a actualizar (identificador canonico).", required = true)

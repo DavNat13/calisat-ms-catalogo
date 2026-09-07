@@ -194,6 +194,24 @@ class ProductoCatalogIT {
 
     @Test
     @WithMockUser
+    void put_intentandoRenombrarSku_devuelve400() throws Exception {
+        mockMvc.perform(post("/api/v1/catalogo")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonProducto("SKU-RENAME-001", "Anillas", "19.99")))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(put("/api/v1/catalogo/{sku}", "SKU-RENAME-001")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonProducto("SKU-RENAME-002", "Anillas Renombradas", "25.99")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje").value(containsString("inmutable")));
+
+        assertThat(productoRepository.findBySku("SKU-RENAME-001")).isPresent();
+        assertThat(productoRepository.findBySku("SKU-RENAME-002")).isEmpty();
+    }
+
+    @Test
+    @WithMockUser
     void delete_esIdempotente_elSegundoDeleteDevuelve200() throws Exception {
         mockMvc.perform(post("/api/v1/catalogo")
                         .contentType(MediaType.APPLICATION_JSON)

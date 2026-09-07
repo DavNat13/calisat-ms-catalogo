@@ -38,6 +38,13 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void cambioSku_responde400() {
+        ResponseEntity<Map<String, Object>> r =
+                handler.skuInmutable(new SkuActualizacionNoPermitidaException("AB-1"));
+        assertEquals(HttpStatus.BAD_REQUEST, r.getStatusCode());
+    }
+
+    @Test
     void validacionBean_responde400ConCampoYDetalle() {
         BindingResult br = mock(BindingResult.class);
         when(br.getFieldErrors()).thenReturn(List.of(new FieldError("request", "sku", "sku es obligatorio")));

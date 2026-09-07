@@ -1,6 +1,6 @@
-package com.califorge.mscatalogo.repository;
+package com.calisat.mscatalogo.repository;
 
-import com.califorge.mscatalogo.model.Producto;
+import com.calisat.mscatalogo.model.Producto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

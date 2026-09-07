@@ -1,4 +1,4 @@
-package com.califorge.mscatalogo.dto;
+package com.calisat.mscatalogo.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
@@ -9,10 +9,6 @@ import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
-/**
- * DTO de entrada para crear/actualizar un producto.
- * Excluye id, activo y fechaCreacion (se gestionan internamente en la entidad).
- */
 public record ProductoRequest(
         @Schema(description = "SKU del producto (identificador canonico, unico).", example = "ANILLAS-001", maxLength = 64)
         @NotBlank(message = "sku es obligatorio")

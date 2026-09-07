@@ -1,6 +1,6 @@
-package com.califorge.mscatalogo.dto;
+package com.calisat.mscatalogo.dto;
 
-import com.califorge.mscatalogo.model.Producto;
+import com.calisat.mscatalogo.model.Producto;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;

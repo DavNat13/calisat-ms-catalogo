@@ -1,4 +1,4 @@
-package com.califorge.mscatalogo.exception;
+package com.calisat.mscatalogo.exception;
 
 public class SkuDuplicadoException extends RuntimeException {
 

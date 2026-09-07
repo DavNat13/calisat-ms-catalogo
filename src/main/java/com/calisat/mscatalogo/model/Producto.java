@@ -1,4 +1,4 @@
-package com.califorge.mscatalogo.model;
+package com.calisat.mscatalogo.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

@@ -1,4 +1,4 @@
-package com.califorge.mscatalogo.config;
+package com.calisat.mscatalogo.config;
 
 import java.util.List;
 

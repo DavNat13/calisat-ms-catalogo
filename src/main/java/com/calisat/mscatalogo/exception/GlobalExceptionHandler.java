@@ -1,4 +1,4 @@
-package com.califorge.mscatalogo.exception;
+package com.calisat.mscatalogo.exception;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,11 +15,6 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Map;
 
-/**
- * Contrato de error unico del MS: toda respuesta de error usa {@code { "mensaje": ... }}.
- * Los errores 4xx se loguean como advertencias y el 5xx como error (con stacktrace),
- * sin exponer detalles internos al cliente.
- */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 

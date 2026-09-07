@@ -64,6 +64,16 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- OpenAPI 3 + Swagger UI (Fase 7). Springdoc 3.x es la rama compatible con
+             Spring Boot 4 (la 2.x es de Boot 3). NO esta gestionada por el BOM de
+             Boot 4.1 (verificado con help:effective-pom), por lo que se fija la
+             version explicita 3.1.0 (desviacion documentada en PLAN-CATALOGO-PENDIENTE). -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>3.1.0</version>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

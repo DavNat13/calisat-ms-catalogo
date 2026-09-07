@@ -26,6 +26,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
  * los endpoints de administracion (POST/PUT/DELETE) exigen JWT valido.
  * Decision del equipo (revision 2026-09-05): "Administradores" en ESP se interpreta
  * como "usuario autenticado" (no se exige un claim de rol en esta iteracion).
+ *
+ * Decision Fase 7 (v1.0.10): /v3/api-docs/** y /swagger-ui/** se sirven SIN token.
+ * Son lecturas de documentacion (GET publico), coherente con la decision de lectura
+ * publica del catalogo. No exponen datos de negocio ni secretos. Queda registrada
+ * en los riesgos de PLAN-CATALOGO-PENDIENTE.md (Fase 7).
  */
 @Configuration
 @EnableWebSecurity
@@ -111,6 +116,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(HttpMethod.GET, "/api/v1/catalogo/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
+                // Documentacion OpenAPI/Swagger: GET publico, decision Fase 7 (ver javadoc de la clase).
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2

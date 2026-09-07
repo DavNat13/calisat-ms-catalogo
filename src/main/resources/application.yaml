@@ -3,7 +3,7 @@ spring:
     name: calisat-ms-catalogo
 
   datasource:
-    url: jdbc:postgresql://postgres:5432/calisat_catalogo
+    url: jdbc:postgresql://calisat-db-catalogo:5432/calisat_catalogo
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver

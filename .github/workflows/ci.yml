@@ -20,8 +20,13 @@ jobs:
           java-version: '21'
           cache: maven
 
+      # El wrapper se versiono desde Windows (mode 100644). El bit de ejecucion
+      # ya se fixeo en git, pero se garantiza de forma defensiva por cualquier
+      # re-add futuro del wrapper desde Windows.
       - name: Maven clean verify
-        run: ./mvnw -B -ntp clean verify
+        run: |
+          chmod +x ./mvnw
+          ./mvnw -B -ntp clean verify
 
   docker-build:
     needs: mvn-clean-verify

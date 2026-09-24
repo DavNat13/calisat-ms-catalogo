@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -57,15 +56,37 @@ public class ProductoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @Operation(summary = "Listar productos por categoria", description = "Productos activos filtrados por categoria (acceso publico).")
+    @Operation(summary = "Listar productos por categoria", description = "Productos activos filtrados por categoria, paginados (acceso publico).")
     @GetMapping("/categoria/{categoria}")
-    public ResponseEntity<List<ProductoResponse>> listarPorCategoria(
+    public ResponseEntity<Page<ProductoResponse>> listarPorCategoria(
             @Parameter(name = "categoria", description = "Categoria a filtrar.", required = true)
-            @PathVariable String categoria) {
-        List<ProductoResponse> productos = productoService.listarPorCategoria(categoria).stream()
-                .map(ProductoResponse::desde)
-                .toList();
+            @PathVariable String categoria,
+            @PageableDefault(size = 20, sort = "id") Pageable pageable) {
+        Page<ProductoResponse> productos = productoService.listarPorCategoria(categoria, pageable)
+                .map(ProductoResponse::desde);
         return ResponseEntity.ok(productos);
+    }
+
+    @Operation(summary = "Listar productos inactivos", description = "Productos dados de baja (activo=false), paginados, para su posible reactivacion. Requiere JWT.")
+    @GetMapping("/inactivos")
+    public ResponseEntity<Page<ProductoResponse>> listarInactivos(
+            @PageableDefault(size = 20, sort = "id") Pageable pageable) {
+        Page<ProductoResponse> productos = productoService.listarInactivos(pageable)
+                .map(ProductoResponse::desde);
+        return ResponseEntity.ok(productos);
+    }
+
+    @Operation(summary = "Reactivar producto por SKU", description = "Reactiva un producto dado de baja: activo pasa a true. Idempotente: 200 incluso si ya estaba activo; 404 si el SKU no existe. Requiere JWT.")
+    @PostMapping("/{sku}/reactivar")
+    public ResponseEntity<Map<String, Object>> reactivar(
+            @Parameter(name = "sku", description = "SKU del producto a reactivar (identificador canonico).", required = true)
+            @PathVariable String sku) {
+        return productoService.reactivar(sku)
+                .map(p -> ResponseEntity.ok(Map.<String, Object>of(
+                        "sku", p.getSku(),
+                        "mensaje", "Producto reactivado correctamente"
+                )))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @Operation(summary = "Crear producto", description = "Crea un producto con SKU unico. 201 con Location por SKU; 400 si el SKU ya existe o la entrada es invalida. Requiere JWT.")

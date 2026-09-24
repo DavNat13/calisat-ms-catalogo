@@ -10,7 +10,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -41,8 +40,21 @@ public class ProductoService {
     }
 
     @Transactional(readOnly = true)
-    public List<Producto> listarPorCategoria(String categoria) {
-        return productoRepository.findByCategoriaAndActivoTrue(categoria);
+    public Page<Producto> listarPorCategoria(String categoria, Pageable pageable) {
+        return productoRepository.findByCategoriaAndActivoTrue(categoria, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Producto> listarInactivos(Pageable pageable) {
+        return productoRepository.findByActivoFalse(pageable);
+    }
+
+    public Optional<Producto> reactivar(String sku) {
+        return productoRepository.findBySku(sku)
+                .map(producto -> {
+                    producto.setActivo(true);
+                    return productoRepository.save(producto);
+                });
     }
 
     public Optional<Producto> actualizar(String sku, ProductoRequest request) {

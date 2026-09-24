@@ -1,5 +1,13 @@
 # Changelog - calisat-ms-catalogo
 
+## [1.3.0] - 2026-09-24
+
+### Added
+- RBAC con Azure Entra ID: bean `JwtAuthenticationConverter` que extrae el claim `roles` del JWT con prefijo `ROLE_` (normalizado a mayúsculas)
+- Escrituras del catálogo (`POST`, `PUT`, `DELETE` incluido `/{sku}/reactivar`) y `GET /inactivos` restringidas a `ADMINISTRADOR`
+- Lectura pública de productos activos (`GET /api/v1/catalogo`, `/{sku}`, `/categoria/{categoria}`) mantiene `permitAll`
+- Versión pom.xml actualizada a 1.3.0
+
 ## [1.2.0] - 2026-09-23
 
 ### Added
@@ -113,6 +121,7 @@
 - CORS configurado para API Gateway
 - Health check via Spring Actuator
 
+[1.3.0]: https://github.com/DavNat13/calisat-ms-catalogo/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/DavNat13/calisat-ms-catalogo/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/DavNat13/calisat-ms-catalogo/compare/v1.0.17...v1.1.0
 [1.0.17]: https://github.com/DavNat13/calisat-ms-catalogo/compare/v1.0.16...v1.0.17

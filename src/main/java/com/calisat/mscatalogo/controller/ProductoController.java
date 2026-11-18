@@ -32,6 +32,10 @@ public class ProductoController {
 
     private final ProductoService productoService;
 
+    /** Opcional: publica la vista del producto en Kafka (interacciones-user). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.calisat.mscatalogo.service.InteraccionPublisher interacciones;
+
     public ProductoController(ProductoService productoService) {
         this.productoService = productoService;
     }
@@ -51,6 +55,14 @@ public class ProductoController {
             @Parameter(name = "sku", description = "SKU del producto (identificador canonico), p.ej. ANILLAS-001.", required = true)
             @PathVariable String sku) {
         return productoService.buscarPorSku(sku)
+                .map(producto -> {
+                    if (interacciones != null) {
+                        interacciones.publicar(com.calisat.mscatalogo.service.InteraccionPublisher.usuarioActual(),
+                                producto.getSku(), com.calisat.mscatalogo.service.InteraccionPublisher.VIEW,
+                                producto.getCategoria());
+                    }
+                    return producto;
+                })
                 .map(ProductoResponse::desde)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

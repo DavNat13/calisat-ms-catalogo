@@ -1,5 +1,15 @@
 # Changelog - calisat-ms-catalogo
 
+## [1.4.0] - 2026-11-18
+
+### Added
+- Dependencia `spring-kafka` y productor de interacciones (`KafkaProducerConfig`, `InteraccionPublisher`, `InteraccionEvent`) contra el tópico `interacciones-user`
+- Al consultar un producto por SKU se publica el evento `view` en Kafka (best-effort: un fallo de Kafka no afecta la respuesta)
+
+### Fixed
+- CORS admite la cabecera `Idempotency-Key`
+- Versión pom.xml actualizada a 1.4.0
+
 ## [1.3.0] - 2026-09-24
 
 ### Added

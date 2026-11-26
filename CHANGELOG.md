@@ -1,5 +1,11 @@
 # Changelog - calisat-ms-catalogo
 
+## [1.5.0] - 2026-11-26
+
+### Added
+- Autenticación dual con Entra ID y Cognito para registrar las vistas de productos por usuario.
+- Configuración de proveedores JWT, validación por emisor y conversión de roles con rol CLIENTE por defecto para Cognito.
+
 ## [1.4.1] - 2026-11-25
 
 ### Fixed

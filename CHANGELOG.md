@@ -1,5 +1,10 @@
 # Changelog - calisat-ms-catalogo
 
+## [1.4.1] - 2026-11-25
+
+### Fixed
+- Bootstrap de Kafka configurable mediante `KAFKA_BOOTSTRAP` en `docker-compose.yml` para el despliegue en 9 instancias.
+
 ## [1.4.0] - 2026-11-18
 
 ### Added
